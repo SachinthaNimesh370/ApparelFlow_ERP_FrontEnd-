@@ -1,0 +1,26 @@
+name: Deploy frontend
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci && npm run build
+
+      - name: Deploy to Nginx over SSH
+        env:
+          KEY: ${{ secrets.EC2_SSH_KEY }}
+          HOST: ${{ secrets.FRONTEND_HOST }}
+        run: |
+          echo "$KEY" > key.pem && chmod 600 key.pem
+          rsync -az --delete -e "ssh -i key.pem -o StrictHostKeyChecking=no" \
+            dist/ ec2-user@$HOST:/var/www/apparelflow/
