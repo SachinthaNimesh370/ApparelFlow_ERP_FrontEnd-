@@ -1,25 +1,34 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth, DEMO_CREDENTIALS } from '../context/AuthContext';
-import { Scissors, CheckCircle2, Factory, LogOut, UserCheck } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Scissors, CheckCircle2, Factory, LogOut, ShieldCheck } from 'lucide-react';
 
 export const Navbar = () => {
-  const { user, loginAsRole, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   if (!user) return null;
 
-  const handleQuickRoleSwitch = async (roleKey) => {
-    try {
-      await loginAsRole(roleKey);
-      if (roleKey === 'cutting_supervisor') navigate('/orders');
-      else if (roleKey === 'cutting_verifier') navigate('/verify');
-      else if (roleKey === 'sewing_supervisor') navigate('/sewing');
-    } catch (err) {
-      console.error('Role switch error:', err);
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const getRoleBadgeStyle = (role) => {
+    switch (role) {
+      case 'cutting_supervisor':
+        return { bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe', label: 'Cutting Supervisor' };
+      case 'cutting_verifier':
+        return { bg: '#fffbeb', color: '#92400e', border: '#fde68a', label: 'Cutting Verifier (QC)' };
+      case 'sewing_supervisor':
+        return { bg: '#ecfdf5', color: '#065f46', border: '#a7f3d0', label: 'Sewing Supervisor' };
+      default:
+        return { bg: '#f1f5f9', color: '#475569', border: '#cbd5e1', label: role.replace('_', ' ') };
     }
   };
+
+  const roleMeta = getRoleBadgeStyle(user.role);
 
   return (
     <header style={{
@@ -62,7 +71,7 @@ export const Navbar = () => {
             </div>
           </Link>
 
-          {/* Navigation links based on role */}
+          {/* Navigation link based strictly on authenticated role */}
           <nav style={{ display: 'flex', gap: '0.5rem', marginLeft: '1rem' }}>
             {user.role === 'cutting_supervisor' && (
               <Link
@@ -77,7 +86,8 @@ export const Navbar = () => {
                   backgroundColor: location.pathname === '/orders' ? '#eff6ff' : 'transparent',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.375rem'
+                  gap: '0.375rem',
+                  border: location.pathname === '/orders' ? '1px solid #bfdbfe' : '1px solid transparent'
                 }}
               >
                 <Scissors size={16} /> Cutting Batches
@@ -97,7 +107,8 @@ export const Navbar = () => {
                   backgroundColor: location.pathname === '/verify' ? '#fffbeb' : 'transparent',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.375rem'
+                  gap: '0.375rem',
+                  border: location.pathname === '/verify' ? '1px solid #fde68a' : '1px solid transparent'
                 }}
               >
                 <CheckCircle2 size={16} /> QC Verification Terminal
@@ -117,7 +128,8 @@ export const Navbar = () => {
                   backgroundColor: location.pathname === '/sewing' ? '#ecfdf5' : 'transparent',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.375rem'
+                  gap: '0.375rem',
+                  border: location.pathname === '/sewing' ? '1px solid #a7f3d0' : '1px solid transparent'
                 }}
               >
                 <Factory size={16} /> Sewing Queue Gate
@@ -126,66 +138,46 @@ export const Navbar = () => {
           </nav>
         </div>
 
-        {/* Right side: Evaluator Role Switcher & Active User */}
+        {/* Right side: Authenticated User Information & Sign Out */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {/* 1-Click Role Switcher Pill Bar */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: '#f1f5f9',
-            padding: '0.25rem',
-            borderRadius: '8px',
-            gap: '0.25rem',
-            border: '1px solid #e2e8f0'
-          }}>
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', padding: '0 0.5rem', textTransform: 'uppercase' }}>
-              Switch Role:
-            </span>
-            {Object.entries(DEMO_CREDENTIALS).map(([key, data]) => {
-              const isActive = user.role === key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => handleQuickRoleSwitch(key)}
-                  style={{
-                    border: 'none',
-                    padding: '0.35rem 0.65rem',
-                    borderRadius: '6px',
-                    fontSize: '0.75rem',
-                    fontWeight: isActive ? 700 : 500,
-                    cursor: 'pointer',
-                    backgroundColor: isActive ? '#ffffff' : 'transparent',
-                    color: isActive ? '#0f172a' : '#475569',
-                    boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
-                    transition: 'all 0.15s ease'
-                  }}
-                  title={`Switch to ${data.title}`}
-                >
-                  {data.title.split(' ')[0]}
-                </button>
-              );
-            })}
-          </div>
-
           {/* Active User Chip */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderLeft: '1px solid #e2e8f0', paddingLeft: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>
+              <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#0f172a' }}>
                 {user.full_name}
               </div>
-              <div style={{ fontSize: '0.725rem', color: '#64748b', textTransform: 'capitalize' }}>
-                {user.role.replace('_', ' ')}
+              <div style={{
+                display: 'inline-block',
+                marginTop: '0.15rem',
+                padding: '0.15rem 0.5rem',
+                borderRadius: '4px',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                backgroundColor: roleMeta.bg,
+                color: roleMeta.color,
+                border: `1px solid ${roleMeta.border}`
+              }}>
+                {roleMeta.label}
               </div>
             </div>
 
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="btn btn-outline"
-              style={{ padding: '0.4rem 0.65rem', fontSize: '0.8rem' }}
-              title="Sign Out"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                padding: '0.45rem 0.85rem',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: '#475569',
+                borderColor: '#cbd5e1'
+              }}
+              title="Sign Out of Session"
             >
               <LogOut size={14} />
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
