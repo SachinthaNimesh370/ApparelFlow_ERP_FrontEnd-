@@ -24,3 +24,6 @@ jobs:
           echo "$KEY" > key.pem && chmod 600 key.pem
           rsync -az --delete -e "ssh -i key.pem -o StrictHostKeyChecking=no" \
             dist/ ec2-user@$HOST:/var/www/apparelflow/
+          ssh -i key.pem -o StrictHostKeyChecking=no ec2-user@$HOST \
+            "chmod -R 755 /var/www/apparelflow"
+
