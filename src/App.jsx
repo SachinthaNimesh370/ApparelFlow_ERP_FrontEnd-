@@ -26,11 +26,11 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             
-            {/* Cutting Supervisor Dashboard */}
+            {/* Cutting Supervisor Dashboard (Strictly cutting_supervisor) */}
             <Route
               path="/orders"
               element={
-                <RoleGuard allowedRoles={['cutting_supervisor', 'cutting_verifier']}>
+                <RoleGuard allowedRoles={['cutting_supervisor']}>
                   <SupervisorDashboard />
                 </RoleGuard>
               }
